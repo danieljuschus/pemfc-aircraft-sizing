@@ -1,0 +1,6 @@
+*.mat
+!aircraft_sensitivities_data/*.mat
+*.pdf
+
+__pycache__/
+.idea/
