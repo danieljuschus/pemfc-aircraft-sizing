@@ -2,6 +2,8 @@
 
 This repository contains the main part of the code that I developed for my Master thesis at the TU Delft in 2020/21.
 
+The required Python packages are: ambiance, pyromat, numpy, scipy and cadquery. The latter is only available on Anaconda. Therefore I suggest creating a conda virtual environment with Python 3.8.
+
 The [main file (matlab_engine_sizing_new.py)](matlab_engine_sizing_new.py) is a Python script which sizes a fuel cell 
 (FC) system. It is designed to be used by the Initiator, a Matlab  aircraft sizing tool developed at our faculty. 
 However, it can also be used directly from Python, for debugging, validation or for sensitivity studies. The main script 
