@@ -14,3 +14,5 @@ comments to make everything as clear as possible.
 For the methodology applied in the code please take a look at chapter 3 of my thesis report: 
 https://repository.tudelft.nl/islandora/object/uuid%3Afdc14875-175e-4a4b-8cde-f2f4b6028194?collection=education. The 
 report also contains an introduction into FC aircraft and a summary of the results that were obtained.
+
+Please note that this repository will not be updated anymore. Instead, further development of the methods will take place within the Initiator, which is a closed-source project. 
