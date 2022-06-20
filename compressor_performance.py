@@ -10,7 +10,8 @@ pm.config["unit_energy"], pm.config["unit_molar"], pm.config["unit_pressure"] = 
 air = pm.get("ig.air")
 # warnings.simplefilter("always")
 
-r_air = pm.units.const_Ru/air.mw()
+r_air = pm.units.const_Ru/(air.mw()/1000000)
+# Wrong order of magnitude for weight from air.mw: 28964 g/kmol --> Corrected Value by dividing with 1e6: 0,0289 g/mol
 
 
 def visc(t):
