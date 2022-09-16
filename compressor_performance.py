@@ -23,17 +23,6 @@ def visc(t):
     return 1.458e-6 * t**1.5 / (t + 110.4)
 
 
-def p_s_theo(s_in, t_in):
-    """
-    Determine pressure from entropy and temperature. Not included in Pyromat yet.
-
-    :param s_in: Entropy in J/K
-    :param t_in: Temperature in K
-    :return: Pressure in Pa
-    """
-    return exp((air.s(t_in, 1)[0]-s_in)/r_air)
-
-
 def compressor_performance_model(power_req, volt_cell, beta, p1, t1, mu1, n=10000):
     """
     Determine compressor performance by performing sizing process. Method as presented in Gambini & Vellini.
@@ -111,10 +100,10 @@ def compressor_performance_model(power_req, volt_cell, beta, p1, t1, mu1, n=1000
         raise ValueError("Rotor outlet enthalpy too high. Reduce RPM!")
     t2_is = float(air.T_h(h2_is))
     t2 = float(air.T_h(h2))
-    p2 = p_s_theo(s1, t2_is)
+    p2 = float(air.p(s=s1, T=t2_is))
     rho2 = air.d(t2, p2)[0]
     cs2 = sqrt(gamma*r_air*t2)
-    t3_is = float(air.T_s(s1, p3))
+    t3_is = float(air.T(s=s1, p=p3))
     h3_is = air.h(t3_is)[0]
     h3 = h1 + (h3_is - h1)/eta_is
     t3 = float(air.T_h(h3))
