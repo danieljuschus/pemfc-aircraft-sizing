@@ -1,5 +1,5 @@
 # Stack mass distribution pie charts - Fig 3.15
-from stack_functions import cell_model, stack_model
+from app.models import cell_model, stack_model
 import matplotlib.pyplot as plt
 
 volt, pdens, _ = cell_model(101325, 101325, 350, 0.2)

@@ -34,14 +34,12 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from ambiance import Atmosphere
-from stack_functions import cell_model, stack_model, mass_flow_stack
-from compressor_performance import compressor_performance_model
-from compressor_mass import compressor_mass_model
-from humidifier import humidifier_model
-from heat_exchanger import heat_exchanger_model
+from app.models import cell_model, stack_model, mass_flow_stack
+from app.models import compressor_performance_model
+from app.models import compressor_mass_model
+from app.models import humidifier_model
+from app.models import heat_exchanger_model
 from scipy.io import savemat
-import matplotlib.pyplot as plt
-
 
 # Depending on number of inputs, determine if run by Matlab, by sensitivity analyses or directly (for debugging)
 if len(sys.argv) == 1:

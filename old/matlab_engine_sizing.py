@@ -35,11 +35,11 @@
 
 import sys
 from ambiance import Atmosphere
-from stack_functions import cell_operating_point, mass_flow_stack, stack_mass
-from compressor_performance import compressor_performance_model
-from compressor_mass import compressor_mass_model
-from humidifier import humidifier_model
-from heat_exchanger import heat_exchanger_model
+from app.models import cell_operating_point, mass_flow_stack, stack_mass
+from app.models import compressor_performance_model
+from app.models import compressor_mass_model
+from app.models import humidifier_model
+from app.models import heat_exchanger_model
 from scipy.io import savemat
 
 # Inputs from Matlab

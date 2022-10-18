@@ -2,7 +2,7 @@ import pyromat as pm
 import warnings
 import os
 from math import sin, cos, acos, tan, atan, sqrt, pi, radians, degrees, log, log10, exp
-from stack_functions import mass_flow_stack
+from models.stack_functions import mass_flow_stack
 
 # use standard SI units
 pm.config["unit_energy"], pm.config["unit_molar"], pm.config["unit_pressure"] = "J", "mol", "Pa"

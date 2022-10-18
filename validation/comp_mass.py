@@ -1,6 +1,6 @@
 # Compressor mass validation - Fig 3.17
-from compressor_performance import compressor_performance_model
-from compressor_mass import compressor_mass_model
+from app.models import compressor_performance_model
+from app.models import compressor_mass_model
 import numpy as np
 import matplotlib.pyplot as plt
 

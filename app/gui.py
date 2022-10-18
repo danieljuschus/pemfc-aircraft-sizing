@@ -5,16 +5,15 @@ Created on Fri Oct 14 16:34:41 2022
 @author: jusc_da
 """
 
-import sys
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 from ambiance import Atmosphere
-from stack_functions import cell_model, stack_model, mass_flow_stack
-from compressor_performance import compressor_performance_model
-from compressor_mass import compressor_mass_model
-from humidifier import humidifier_model
-from heat_exchanger import heat_exchanger_model
+from models.stack_functions import cell_model, stack_model, mass_flow_stack
+from models.compressor_performance import compressor_performance_model
+from models.compressor_mass import compressor_mass_model
+from models.humidifier import humidifier_model
+from models.heat_exchanger import heat_exchanger_model
 
 
 def size_fc_system(h_cr, mach_cr, comp_bool, oversizing, volt_req, power_fc_unit):
