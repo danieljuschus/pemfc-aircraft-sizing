@@ -30,6 +30,9 @@
 # 1: Cell efficiency
 
 import sys
+import streamlit as st
+import pandas as pd
+import plotly.express as px
 from ambiance import Atmosphere
 from stack_functions import cell_model, stack_model, mass_flow_stack
 from compressor_performance import compressor_performance_model
@@ -37,6 +40,8 @@ from compressor_mass import compressor_mass_model
 from humidifier import humidifier_model
 from heat_exchanger import heat_exchanger_model
 from scipy.io import savemat
+import matplotlib.pyplot as plt
+
 
 # Depending on number of inputs, determine if run by Matlab, by sensitivity analyses or directly (for debugging)
 if len(sys.argv) == 1:
@@ -68,6 +73,14 @@ elif len(sys.argv) == 4:
 else:
     raise TypeError("Wrong number of inputs for FC engine sizing python script.")
 
+st.sidebar.title("User inputs")
+st.sidebar.number_input("Required output power from system in MW", key="power", 
+                value=power_fc_unit/1e6, step=0.1, min_value=0.1, max_value=2.)
+st.sidebar.number_input("Cruise altitude in km", key="altitude", 
+                value=h_cr/1e3, step=0.1, min_value=2., max_value=10.)
+
+power_fc_unit = float(st.session_state.power)*1e6
+h_cr = float(st.session_state.altitude)*1e3
 
 # Atmospheric conditions
 atm_cr = Atmosphere(h_cr)
@@ -142,7 +155,7 @@ print("Stack(s): {} kg, Compressor: {} kg, Humidifier: {} kg, Heat Exchanger: {}
 
 # Determine FC unit efficiency
 eta_fcsys = eta_cell*power_fc_unit/(power_comp+power_fc_unit)*mu_f
-print("Cell efficiency: {}, Output efficiency: {}".format(eta_cell, eta_fcsys))
+#print("Cell efficiency: {}, Output efficiency: {}".format(eta_cell, eta_fcsys))
 
 # Write mass of engine and cell efficiency to output file
 if len(sys.argv) == 4:
@@ -152,3 +165,15 @@ elif len(sys.argv) > 4:
     # for other purposes
     import hickle
     hickle.dump([m_stacks, m_comp, m_humid, m_hx, eta_fcsys], "sensitivity_output.hkl")
+    
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.header("Numerical results")
+    st.write("System mass {} kg".format(round(m_unit,2)))
+    st.write("Gravimetric power density of system: {} kW/kg".format(round(power_fc_unit/1e3/m_unit,2)))
+    
+with col2: 
+    mass_df = pd.DataFrame({"Component": ["Stack(s)", "Compressor", "Humidifier", "Heat exchanger"],
+                           "Mass": [m_stacks, m_comp, m_humid, m_hx]})
+    fig = px.pie(mass_df, values="Mass", names="Component")
+    st.write(fig)

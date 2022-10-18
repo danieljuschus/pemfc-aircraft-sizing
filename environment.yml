@@ -1,0 +1,16 @@
+name: th
+channels:
+  - conda-forge
+  - cadquery 
+dependencies:
+  - scipy
+  - matplotlib
+  - numpy
+  - cadquery=2
+  - ambiance
+  - nptyping=1.4.4
+  - plotly
+  - pandas
+  - pip:
+    - pyromat
+    - streamlit

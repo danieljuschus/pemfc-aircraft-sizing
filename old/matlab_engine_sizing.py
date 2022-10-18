@@ -100,7 +100,7 @@ m_stack = stack_mass(area_cell, n_cells/n_stacks_series)  # mass of single stack
 
 # Sum up to find size of FC unit
 m_unit = m_stack*n_stacks_series + m_comp + m_humid + m_hx
-print("Power density of unit in kW/kg: ", round(power_fc_unit/1000/m_unit, 3))
+#print("Power density of unit in kW/kg: ", round(power_fc_unit/1000/m_unit, 3))
 
 # Write mass of engine and cell efficiency to output file for Matlab
 savemat("External/FuelCell/output_from_python.mat", {"engineMass": m_unit, "engineEfficiency": eta_cell})
