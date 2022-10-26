@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery import exporters
 
 rho_ss = 8e3  # kg/m3 - SS304L
 
@@ -57,6 +58,9 @@ def compressor_mass_model(geom, power):
 
     # all parts of compressor body
     parts = [backplate, imp, cas_ai_2, cas_ao_c, out_hc, cas_res3_c]
+    #exporters.export(cas_res3_c, 'app/media/comp.json', tolerance=0.01, angularTolerance=0.1,
+    #                 exportType=exporters.ExportTypes.TJS)
+    exporters.export(cas_res3_c, "app/media/comp.stl")
 
     # sum up the material volumes of all parts, scale down and mulitply with material density
     m_cu = sum([part.objects[0].Volume() for part in parts]) / 100**3 * rho_ss

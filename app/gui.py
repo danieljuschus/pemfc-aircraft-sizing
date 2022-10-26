@@ -16,7 +16,8 @@ from models.humidifier import humidifier_model
 from models.heat_exchanger import heat_exchanger_model
 
 
-def size_fc_system(h_cr, mach_cr, comp_bool, oversizing, volt_req, power_fc_unit):
+def size_fc_system(h_cr, mach_cr, comp_bool, oversizing, volt_req, power_fc_unit, beta):
+    figs = []
     # Atmospheric conditions
     atm_cr = Atmosphere(h_cr)
     c_cr = atm_cr.speed_of_sound[0]  # speed of sound at cruise in m
@@ -31,21 +32,24 @@ def size_fc_system(h_cr, mach_cr, comp_bool, oversizing, volt_req, power_fc_unit
     # Configuration of FC unit
     n_stacks_series = 2  # number of stacks in series
 
-    beta = Atmosphere(0).pressure[0]/p_cr_tot   # compression ratio at cruise level (pressure back to sea level)
+    #beta = Atmosphere(0).pressure[0]/p_cr_tot   # compression ratio at cruise level (pressure back to sea level)
 
     cell_temp = 273.15+80  # operating temperature inside cell
     mu_f = 0.95  # fuel utilisation
 
     # Compressor outlet conditions
-    if comp_bool:
-        pres_cathode_in = beta*p_cr_tot  # assuming the flow slows down completely before the compressor, see
-        #                                  compressor_performance.py
-    else:
-        pres_cathode_in = p_cr_tot
+    # if comp_bool:
+    #     pres_cathode_in = beta*p_cr_tot  # assuming the flow slows down completely before the compressor, see
+    #     #                                  compressor_performance.py
+    # else:
+    #     pres_cathode_in = p_cr_tot
+   
+    pres_cathode_in = p_cr_tot*beta
 
     # Cell model
     pres_h = Atmosphere(0).pressure[0]  # assume that the anode inlet pressure is equal to sea level air pressure
-    volt_cell, power_dens_cell, eta_cell = cell_model(pres_cathode_in, pres_h, cell_temp, oversizing)
+    volt_cell, power_dens_cell, eta_cell, fig = cell_model(pres_cathode_in, pres_h, cell_temp, oversizing)
+    figs.append(fig)
 
     # Compressor models
     if comp_bool:
@@ -74,6 +78,7 @@ def size_fc_system(h_cr, mach_cr, comp_bool, oversizing, volt_req, power_fc_unit
 
     # Stack model
     m_stacks = stack_model(n_stacks_series, volt_req, volt_cell, power_req_new, power_dens_cell)  # mass of stack(s)
+    
 
     # Sum up to find mass of FC unit (all masses in kg)
     m_unit = m_stacks + m_comp + m_humid + m_hx
@@ -86,18 +91,42 @@ def size_fc_system(h_cr, mach_cr, comp_bool, oversizing, volt_req, power_fc_unit
     eta_fcsys = eta_cell*power_fc_unit/(power_comp+power_fc_unit)*mu_f
     #print("Cell efficiency: {}, Output efficiency: {}".format(eta_cell, eta_fcsys))
     
-    return m_unit, m_stacks, m_comp, m_humid, m_hx, eta_fcsys
+    return m_unit, m_stacks, m_comp, m_humid, m_hx, eta_fcsys, figs
     
-
-# m = size_fc_system(5000, 0.4, 1, 0.2, 400, 1e6)
-
 st.sidebar.title("User inputs")
 form = st.sidebar.form(key="input")
 form.number_input("Cruise altitude in km", key="altitude", 
                 value=5., step=0.1, min_value=2., max_value=10.)
 form.number_input("Mach number", key="mach", 
                 value=0.4, step=0.05, min_value=0.05, max_value=0.65)
-comp_bool = form.checkbox("Compressor", value=1)
+
+h_cr = st.session_state.altitude*1e3
+mach_cr = st.session_state.mach
+
+atm_cr = Atmosphere(h_cr)
+
+p_cr_tot = atm_cr.pressure[0]*(1+0.4/2*mach_cr**2)**(1.4/0.4)
+beta_sl = 101325/p_cr_tot
+
+col1, col2, col3 = form.columns(3)
+with col1:
+    comp_bool = st.checkbox("Compressor", value=1)
+with col2:
+    comp_sl_bool = st.checkbox("Provide sea level pressure to the compressor",
+                               disabled=not comp_bool, value=1)
+with col3: 
+    st.number_input("Compressor pressure ratio", 
+                    key="beta",value=beta_sl, step=0.05, 
+                    min_value=0., max_value=2.05, 
+                    disabled=not comp_bool or (comp_bool and comp_sl_bool))
+    
+if not comp_bool:
+    beta = 1
+elif comp_sl_bool:
+    beta = beta_sl
+else:
+    beta = st.session_state.beta
+
 form.number_input("Current oversizing factor", key="oversizing", 
                 value=0.2, step=0.05, min_value=0., max_value=0.5)
 form.number_input("Required output voltage in V", key="voltage", 
@@ -107,18 +136,18 @@ form.number_input("Required output power from system in MW", key="power",
 form.form_submit_button("Run")
 
 
-h_cr = st.session_state.altitude*1e3
-mach_cr = st.session_state.mach
+
 oversizing = st.session_state.oversizing
 voltage = st.session_state.voltage
 power_fc_unit = st.session_state.power*1e6
 
-m_unit, m_stacks, m_comp, m_humid, m_hx, eta_fcsys=  \
-size_fc_system(h_cr, mach_cr, comp_bool, oversizing, voltage, power_fc_unit)
+m_unit, m_stacks, m_comp, m_humid, m_hx, eta_fcsys, figs =  \
+size_fc_system(h_cr, mach_cr, comp_bool, oversizing, voltage, power_fc_unit, beta)
 
 col1, col2, col3 = st.columns(3)
 with col1:
     st.header("Numerical results")
+    # hydrogen mass flow
     st.write("System mass: {} kg".format(round(m_unit,2)))
     st.write("Gravimetric power density of system: {} kW/kg".format(round(power_fc_unit/1e3/m_unit,2)))
     st.write("System efficiency: {}".format(round(eta_fcsys,2)))
@@ -128,5 +157,8 @@ with col2:
     mass_df = pd.DataFrame({"Component": ["Stack(s)", "Compressor", "Humidifier", "Heat exchanger"],
                            "Mass": [m_stacks, m_comp, m_humid, m_hx]})
     fig = px.pie(mass_df, values="Mass", names="Component")
+    # make colors constant
     st.write(fig)
+    st.header("Polarization curve")
+    st.write(figs[0])
     

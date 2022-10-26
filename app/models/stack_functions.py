@@ -75,13 +75,17 @@ def cell_model(pres_air, pres_h, cell_temp, oversizing=0.1):
         - eta_cell: cell efficiency
     """
     js = np.arange(0, 20000)  # array of possible current densities in A/m2
-    ps = [cell_voltage(j, pres_air, pres_h, cell_temp) * j for j in js]  # power density for each j in W/m2
+    _, pot_rev0, pot_rev, _ = cell_voltage(js[0], pres_air, pres_h, cell_temp)
+    vs = [cell_voltage(j, pres_air, pres_h, cell_temp)[0] for j in js]
+    vs_sl_loss = [cell_voltage(j, pres_air, pres_h, cell_temp)[-1] for j in js]
+    ps = js*vs  # power density for each j in W/m2
     j_op = (1 - oversizing) * js[np.nanargmax(ps)]  # current density of nominal operating point
-    volt_cell = cell_voltage(j_op, pres_air, pres_h, cell_temp)  # cell voltage resulting from chosen point
+    volt_cell = cell_voltage(j_op, pres_air, pres_h, cell_temp)[0]  # cell voltage resulting from chosen point
     power_dens_cell = volt_cell*j_op  # power density at chosen point
     eta_cell = volt_cell / 1.482  # cell efficiency - HHV
     # eta_cell = volt_cell / 1.229  # cell efficiency - LHV
-    return volt_cell, power_dens_cell, eta_cell
+    
+    return volt_cell, power_dens_cell, eta_cell, plot_polarization_curve(js, vs, ps, j_op, pot_rev0, pot_rev, vs_sl_loss)
 
 
 def cell_voltage(j, pres_air, pres_h, cell_temp):
@@ -108,8 +112,10 @@ def cell_voltage(j, pres_air, pres_h, cell_temp):
     mass_trans_c = 0.5  # V - mass transport loss constant
     j_lim = 2e4  # A/m^2 - limiting current density
 
+    pres_air_atm, pres_h_atm = pres_air* 0.000009869233, pres_h* 0.000009869233 # convert to atm for nernst equation
+
     pot_rev = pot_rev0 - 44.34 / (2 * farad) * (cell_temp - temp0) + r_gas * cell_temp / (2 * farad) * log(
-        pres_h * sqrt(pres_air*0.21))  # reversible potential, as function of operating temp and air pressure - O'Hayre
+        pres_h_atm * sqrt(pres_air_atm*0.21))  # reversible potential, as function of operating temp and air pressure - O'Hayre
 
     # cathode exchange current density as function of temperature and pressure (Barbir 2012) - not used
     # compare with Dicks page 118
@@ -127,41 +133,62 @@ def cell_voltage(j, pres_air, pres_h, cell_temp):
     if volt < 0:  # don't include negative voltages
         volt = np.nan
 
+    volt_sl_loss = volt
     if not isclose(pres_air, 101325):
         # correction in case cathode inlet pressure is not sea level - derived from Sondergaard and Pratt et al.
         pf = pres_air/101325
         volt = volt*(-0.022830*pf**4 + 0.230982*pf**3 - 0.829603*pf**2 + 1.291515*pf + 0.329935)
 
-    return volt
+    return volt, pot_rev0, pot_rev, volt_sl_loss
 
 
-def plot_polarization_curve():
+def plot_polarization_curve(js, vs, ps, j_op, pot_rev0, pot_rev, vs_sl_loss):
     """
     Plot polarization curve with design point.
     """
-    import matplotlib.pyplot as plt
-    pres = 1e5
-    temp = 273.15+80
+    import plotly.io as pio
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    
+    pio.renderers.default='browser'
+    
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    js = np.arange(0, 20000)
-    vs = [cell_voltage(ji, pres, pres, temp) for ji in js]
-    volt_cell, power_dens_cell, _ = cell_model(pres, pres, temp)
-    ps = js*vs
+    j_max = js[np.nanargmax(ps)]
 
-    fig, ax1 = plt.subplots()
-    ax2 = ax1.twinx()
-    ax1.plot(js, vs, "k-", label="Voltage")
-    ax2.plot(js, ps, "k--", label="Power density")
-    ax2.plot(power_dens_cell/volt_cell, power_dens_cell, "rX", label="Design point", markersize=15)
-    ax1.grid()
-    ax1.set_xlabel("Current density in $A/m^2$")
-    ax1.set_ylabel("Cell voltage in $V$")
-    ax2.set_ylabel("Power density in $W/m^2$")
-    fig.legend(loc=(0.25, 0.15))
-    plt.tight_layout()
-    plt.savefig("validation/figures/pol_curve.pdf")
-    plt.show()
+    fig.add_trace(go.Scatter(x=js,y=vs, name = "Actual cell voltage"), secondary_y  = False)
+    fig.add_trace(go.Scatter(x=js,y=ps, name = "Power density"), secondary_y  = True)
+    fig.add_trace(go.Scatter(x=js,y=vs_sl_loss, name = "Cell voltage without effect of altitude on voltage losses"), secondary_y  = False)
+    fig.add_trace(go.Scatter(x=[j_op,j_op],y=[0.95*min(vs),1.05*pot_rev0], 
+                             name="Nominal current density",
+                             mode='lines'),
+                  secondary_y  = False)
+    fig.add_trace(go.Scatter(x=[j_max,j_max],y=[0.95*min(vs),1.05*pot_rev0], 
+                             name="Current density at max. power density",
+                             mode='lines'), 
+                  secondary_y  = False)
+    
+    fig.add_trace(go.Scatter(x=[min(js),max(js)],y=[pot_rev0,pot_rev0], 
+                             name="Reversible potential at standard conditions",
+                             mode='lines'), 
+                  secondary_y  = False)
+    
+    fig.add_trace(go.Scatter(x=[min(js),max(js)],y=[pot_rev,pot_rev], 
+                             name="Reversible potential at operating conditions",
+                             mode='lines'), 
+                  secondary_y  = False)
+    
+    fig.update_xaxes(title_text="Current density in A/m<sup>2</sup>", 
+                     tickformat=".5g", range=[0,np.where(np.isnan(vs))[0][0]])
+    
+    fig.update_yaxes(rangemode='tozero')
+    fig.update_yaxes(range=[0,1.05*pot_rev0], title_text="Cell voltage in V", color="blue", title_font_color="blue", secondary_y=False)
+    fig.update_yaxes(title_text=r"Power density in W/m<sup>2</sup>", color="red", title_font_color="red", secondary_y=True)
+    
+    return fig
+
 
 
 if __name__ == "__main__":
-    plot_polarization_curve()
+    _, _, _, fig = cell_model(100000, 100000, 350)
+    fig.show()
