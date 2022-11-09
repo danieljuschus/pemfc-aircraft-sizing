@@ -1,16 +1,18 @@
-name: myenv
+name: gui
 channels:
   - conda-forge
   - cadquery 
 dependencies:
   - scipy
-  - matplotlib
   - numpy
-  - cadquery=2
+  - cadquery=2.1
   - ambiance
   - nptyping=1.4.4
   - plotly
   - pandas
+  - pip
   - pip:
     - pyromat
     - streamlit
+    - pyvista 
+    - stpyvista

@@ -1,4 +1,5 @@
 from math import sqrt
+import numpy as np
 
 # constants:
 r_air = 287.05
@@ -77,7 +78,9 @@ def heat_exchanger_model(power_stacks, volt_cell, cell_temp, mu_f, v_cr, m_cr, p
     w_hx = (int(sqrt(n_tube))+1)*h_pass
     h_hx = int(sqrt(n_tube))*h_pass/displ
 
-    return 1.2*(m_al + 2*m_h2o)
+    return 1.2*(m_al + 2*m_h2o), [(np.ceil(np.sqrt(n_tube))+1)*h_pass,
+                                  (np.ceil(np.sqrt(n_tube))+1)*h_pass,
+                                  l_tube]
 
 
 if __name__ == "__main__":

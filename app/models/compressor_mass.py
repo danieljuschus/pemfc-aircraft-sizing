@@ -60,7 +60,13 @@ def compressor_mass_model(geom, power):
     parts = [backplate, imp, cas_ai_2, cas_ao_c, out_hc, cas_res3_c]
     #exporters.export(cas_res3_c, 'app/media/comp.json', tolerance=0.01, angularTolerance=0.1,
     #                 exportType=exporters.ExportTypes.TJS)
-    exporters.export(cas_res3_c, "app/media/comp.stl")
+    
+    res = backplate
+    for part in parts:
+        res = res.union(part)
+    
+    #res = backplate.union(imp).union(cas_res3_c)
+    exporters.export(res, "media/comp.stl")
 
     # sum up the material volumes of all parts, scale down and mulitply with material density
     m_cu = sum([part.objects[0].Volume() for part in parts]) / 100**3 * rho_ss

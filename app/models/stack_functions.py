@@ -1,4 +1,5 @@
 import numpy as np
+import cadquery as cq
 from math import log, sqrt, exp, pi, isclose
 
 
@@ -43,8 +44,10 @@ def stack_model(n_stacks_series, volt_req, volt_cell, power_req, power_dens_cell
 
     m_tot = m_bp+m_ep+m_bolts+m_mea  # mass of a single stack
     # print("BP: {}, EP: {}, Bolts: {}, MEA: {}".format(m_bp, m_ep, m_bolts, m_mea    ))
+    
+    dim = [np.sqrt(area_cell),np.sqrt(area_cell),l_bolt]
 
-    return m_tot*n_stacks_series
+    return m_tot*n_stacks_series, dim, [n_cells, area_cell]
 
 
 def mass_flow_stack(power_stack, volt_cell):
@@ -158,7 +161,10 @@ def plot_polarization_curve(js, vs, ps, j_op, pot_rev0, pot_rev, vs_sl_loss):
 
     fig.add_trace(go.Scatter(x=js,y=vs, name = "Actual cell voltage"), secondary_y  = False)
     fig.add_trace(go.Scatter(x=js,y=ps, name = "Power density"), secondary_y  = True)
-    fig.add_trace(go.Scatter(x=js,y=vs_sl_loss, name = "Cell voltage without effect of altitude on voltage losses"), secondary_y  = False)
+    fig.add_trace(go.Scatter(x=js,y=vs_sl_loss, 
+                             name = "Cell voltage without effect of altitude on voltage losses", 
+                  line=dict(color='blue', dash='dash')),
+                  secondary_y  = False)
     fig.add_trace(go.Scatter(x=[j_op,j_op],y=[0.95*min(vs),1.05*pot_rev0], 
                              name="Nominal current density",
                              mode='lines'),
@@ -170,12 +176,14 @@ def plot_polarization_curve(js, vs, ps, j_op, pot_rev0, pot_rev, vs_sl_loss):
     
     fig.add_trace(go.Scatter(x=[min(js),max(js)],y=[pot_rev0,pot_rev0], 
                              name="Reversible potential at standard conditions",
-                             mode='lines'), 
+                             mode='lines',
+                  line=dict(color='black', dash='dash')), 
                   secondary_y  = False)
     
     fig.add_trace(go.Scatter(x=[min(js),max(js)],y=[pot_rev,pot_rev], 
                              name="Reversible potential at operating conditions",
-                             mode='lines'), 
+                             mode='lines',
+                  line=dict(color='black')), 
                   secondary_y  = False)
     
     fig.update_xaxes(title_text="Current density in A/m<sup>2</sup>", 
@@ -185,10 +193,23 @@ def plot_polarization_curve(js, vs, ps, j_op, pot_rev0, pot_rev, vs_sl_loss):
     fig.update_yaxes(range=[0,1.05*pot_rev0], title_text="Cell voltage in V", color="blue", title_font_color="blue", secondary_y=False)
     fig.update_yaxes(title_text=r"Power density in W/m<sup>2</sup>", color="red", title_font_color="red", secondary_y=True)
     
+    fig.update_layout(autosize=False, width=1600, height=800)
+    fig.update_layout(legend=dict(
+    #orientation="h",
+    yanchor="bottom",
+    y=1.02,
+    xanchor="right",
+    x=1))
+    
+    # only for static image generation (kaleido required)
+    #fig.update_layout(autosize=False, width=1600, height=800, font_size=24, showlegend=False)
+    
+    fig.write_image("polcurve.png")
+    
     return fig
 
 
 
 if __name__ == "__main__":
-    _, _, _, fig = cell_model(100000, 100000, 350)
+    _, _, _, fig = cell_model(60000, 100000, 350)
     fig.show()
