@@ -240,6 +240,8 @@ with col1:
                              "Number of cells",
                              "Area per cell in m²"])
     
+    st.warning('Numerical values below are just placeholders', icon="⚠️")
+    
     with st.expander("Stack"):
         st.table(df)
 

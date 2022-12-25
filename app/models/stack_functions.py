@@ -204,7 +204,7 @@ def plot_polarization_curve(js, vs, ps, j_op, pot_rev0, pot_rev, vs_sl_loss):
     # only for static image generation (kaleido required)
     #fig.update_layout(autosize=False, width=1600, height=800, font_size=24, showlegend=False)
     
-    fig.write_image("polcurve.png")
+    #fig.write_image("polcurve.png")
     
     return fig
 

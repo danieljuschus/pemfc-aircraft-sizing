@@ -32,7 +32,8 @@ RUN conda env create -f environment.yml
 RUN conda install -c conda-forge conda-pack
 
 # Use conda-pack to create a standalone enviornment with smaller size in /venv:
-RUN conda-pack -n myenv -o /tmp/env.tar && \
+# --ignore-mission-files added on Windows due to problem with ipython
+RUN conda-pack -n gui -o /tmp/env.tar --ignore-missing-files && \
   mkdir /venv && cd /venv && tar xf /tmp/env.tar && \
   rm /tmp/env.tar
 
@@ -43,7 +44,7 @@ RUN /venv/bin/conda-unpack
 FROM debian:buster AS runtime
 
 # Install libgl1 for cadquery
-RUN apt-get update && apt-get install -y libgl1-mesa-glx
+RUN apt-get update && apt-get install -y libgl1-mesa-glx libxrender1
 
 # Copy /venv from the previous stage:
 COPY --from=build /venv /venv
@@ -54,6 +55,7 @@ SHELL ["/bin/bash", "--login", "-c"]
 # Copy all necessary files and set working dir
 COPY app/gui.py app/
 COPY app/models app/models/
+COPY app/media app/media
 WORKDIR /app
 
 # Run GUI

@@ -16,3 +16,4 @@ dependencies:
     - streamlit
     - pyvista 
     - stpyvista
+    - kaleido

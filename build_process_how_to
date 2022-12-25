@@ -1,0 +1,8 @@
+Building docker image: 
+docker build -t gui .
+
+Run docker image: 
+docker run -p 8501:8501 gui
+
+Deploy to fly:
+flyctl deploy

@@ -6,3 +6,6 @@ __pycache__/
 .idea/
 
 .spyproject/
+
+# pyvista html file
+app/model.html
