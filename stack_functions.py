@@ -4,17 +4,18 @@ from math import log, sqrt, exp, pi, isclose
 
 def stack_model(n_stacks_series, volt_req, volt_cell, power_req, power_dens_cell):
     """
-    Calculate mass of stack(s) in the FC unit.
+    Calculate mass of stack(s) in the FC system.
 
-    :param n_stacks_series: Number of stacks in series in FC unit
-    :param volt_req: Voltage to be delivered by FC unit in V
+    :param n_stacks_series: Number of stacks in series in FC system
+    :param volt_req: Voltage to be delivered by FC system in V
     :param volt_cell: Nominal cell voltage in V
-    :param power_req: Electrical power to be delivered by stacks (bigger than propulsive output power of FC unit)
+    :param power_req: Electrical power to be delivered by stacks (bigger than propulsive output power of FC system)
     :param power_dens_cell: Nominal cell power density in W/m^2
     :return: mass of stack(s) in kg
     """
     # # constants
     # bipolar plate
+    t_bp_dim = 2e-4  # m - thickness for determination of complete dimensions
     t_bp = 2e-4  # m
     rho_bp = 8e3  # kg/m3 - SS304L
 
@@ -22,7 +23,7 @@ def stack_model(n_stacks_series, volt_req, volt_cell, power_req, power_dens_cell
     t_ep = 2.5e-2  # m
     rho_ep = 8e3  # kg/m3 - same as bp
 
-    # bolts
+    # bolts - remove those?
     n_bolt = 10  # see Dey 2019
     rho_bolt = 8e3
 
@@ -55,7 +56,7 @@ def mass_flow_stack(power_stack, volt_cell):
     :param volt_cell: Cell voltage in V
     :return: mass flow in kg/s
     """
-    stoich = 2  # assumed stoichiometry
+    stoich = 2  # assumed stoichiometry TODO: consider this more in detail for air cooled
     return 3.58e-7 * stoich * power_stack / volt_cell
 
 
@@ -159,7 +160,7 @@ def plot_polarization_curve():
     ax2.set_ylabel("Power density in $W/m^2$")
     fig.legend(loc=(0.25, 0.15))
     plt.tight_layout()
-    plt.savefig("validation/figures/pol_curve.pdf")
+    #plt.savefig("validation/figures/pol_curve.pdf")
     plt.show()
 
 

@@ -1,0 +1,6 @@
+numpy
+ambiance
+scipy
+pyromat
+cadquery
+matplotlib
