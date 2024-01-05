@@ -1,21 +1,21 @@
 import numpy as np
-import cadquery as cq
 from math import log, sqrt, exp, pi, isclose
 
 
 def stack_model(n_stacks_series, volt_req, volt_cell, power_req, power_dens_cell):
     """
-    Calculate mass of stack(s) in the FC unit.
+    Calculate mass of stack(s) in the FC system.
 
-    :param n_stacks_series: Number of stacks in series in FC unit
-    :param volt_req: Voltage to be delivered by FC unit in V
+    :param n_stacks_series: Number of stacks in series in FC system
+    :param volt_req: Voltage to be delivered by FC system in V
     :param volt_cell: Nominal cell voltage in V
-    :param power_req: Electrical power to be delivered by stacks (bigger than propulsive output power of FC unit)
+    :param power_req: Electrical power to be delivered by stacks (bigger than propulsive output power of FC system)
     :param power_dens_cell: Nominal cell power density in W/m^2
     :return: mass of stack(s) in kg
     """
     # # constants
     # bipolar plate
+    t_bp_dim = 2e-4  # m - thickness for determination of complete dimensions
     t_bp = 2e-4  # m
     rho_bp = 8e3  # kg/m3 - SS304L
 
@@ -23,7 +23,7 @@ def stack_model(n_stacks_series, volt_req, volt_cell, power_req, power_dens_cell
     t_ep = 2.5e-2  # m
     rho_ep = 8e3  # kg/m3 - same as bp
 
-    # bolts
+    # bolts - remove those?
     n_bolt = 10  # see Dey 2019
     rho_bolt = 8e3
 
@@ -44,7 +44,7 @@ def stack_model(n_stacks_series, volt_req, volt_cell, power_req, power_dens_cell
 
     m_tot = m_bp+m_ep+m_bolts+m_mea  # mass of a single stack
     # print("BP: {}, EP: {}, Bolts: {}, MEA: {}".format(m_bp, m_ep, m_bolts, m_mea    ))
-    
+
     dim = [np.sqrt(area_cell),np.sqrt(area_cell),l_bolt]
 
     return m_tot*n_stacks_series, dim, [n_cells, area_cell]
@@ -58,7 +58,7 @@ def mass_flow_stack(power_stack, volt_cell):
     :param volt_cell: Cell voltage in V
     :return: mass flow in kg/s
     """
-    stoich = 2  # assumed stoichiometry
+    stoich = 2  # assumed stoichiometry TODO: consider this more in detail for air cooled
     return 3.58e-7 * stoich * power_stack / volt_cell
 
 
@@ -87,7 +87,7 @@ def cell_model(pres_air, pres_h, cell_temp, oversizing=0.1):
     power_dens_cell = volt_cell*j_op  # power density at chosen point
     eta_cell = volt_cell / 1.482  # cell efficiency - HHV
     # eta_cell = volt_cell / 1.229  # cell efficiency - LHV
-    
+
     return volt_cell, power_dens_cell, eta_cell, plot_polarization_curve(js, vs, ps, j_op, pot_rev0, pot_rev, vs_sl_loss)
 
 
@@ -152,47 +152,47 @@ def plot_polarization_curve(js, vs, ps, j_op, pot_rev0, pot_rev, vs_sl_loss):
     import plotly.io as pio
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
-    
+
     pio.renderers.default='browser'
-    
+
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
     j_max = js[np.nanargmax(ps)]
 
     fig.add_trace(go.Scatter(x=js,y=vs, name = "Actual cell voltage"), secondary_y  = False)
     fig.add_trace(go.Scatter(x=js,y=ps, name = "Power density"), secondary_y  = True)
-    fig.add_trace(go.Scatter(x=js,y=vs_sl_loss, 
-                             name = "Cell voltage without effect of altitude on voltage losses", 
+    fig.add_trace(go.Scatter(x=js,y=vs_sl_loss,
+                             name = "Cell voltage without effect of altitude on voltage losses",
                   line=dict(color='blue', dash='dash')),
                   secondary_y  = False)
-    fig.add_trace(go.Scatter(x=[j_op,j_op],y=[0.95*min(vs),1.05*pot_rev0], 
+    fig.add_trace(go.Scatter(x=[j_op,j_op],y=[0.95*min(vs),1.05*pot_rev0],
                              name="Nominal current density",
                              mode='lines'),
                   secondary_y  = False)
-    fig.add_trace(go.Scatter(x=[j_max,j_max],y=[0.95*min(vs),1.05*pot_rev0], 
+    fig.add_trace(go.Scatter(x=[j_max,j_max],y=[0.95*min(vs),1.05*pot_rev0],
                              name="Current density at max. power density",
-                             mode='lines'), 
+                             mode='lines'),
                   secondary_y  = False)
-    
-    fig.add_trace(go.Scatter(x=[min(js),max(js)],y=[pot_rev0,pot_rev0], 
+
+    fig.add_trace(go.Scatter(x=[min(js),max(js)],y=[pot_rev0,pot_rev0],
                              name="Reversible potential at standard conditions",
                              mode='lines',
-                  line=dict(color='black', dash='dash')), 
+                  line=dict(color='black', dash='dash')),
                   secondary_y  = False)
-    
-    fig.add_trace(go.Scatter(x=[min(js),max(js)],y=[pot_rev,pot_rev], 
+
+    fig.add_trace(go.Scatter(x=[min(js),max(js)],y=[pot_rev,pot_rev],
                              name="Reversible potential at operating conditions",
                              mode='lines',
-                  line=dict(color='black')), 
+                  line=dict(color='black')),
                   secondary_y  = False)
-    
-    fig.update_xaxes(title_text="Current density in A/m<sup>2</sup>", 
+
+    fig.update_xaxes(title_text="Current density in A/m<sup>2</sup>",
                      tickformat=".5g", range=[0,np.where(np.isnan(vs))[0][0]])
-    
+
     fig.update_yaxes(rangemode='tozero')
     fig.update_yaxes(range=[0,1.05*pot_rev0], title_text="Cell voltage in V", color="blue", title_font_color="blue", secondary_y=False)
     fig.update_yaxes(title_text=r"Power density in W/m<sup>2</sup>", color="red", title_font_color="red", secondary_y=True)
-    
+
     fig.update_layout(autosize=False, width=1600, height=800)
     fig.update_layout(legend=dict(
     #orientation="h",
@@ -200,12 +200,12 @@ def plot_polarization_curve(js, vs, ps, j_op, pot_rev0, pot_rev, vs_sl_loss):
     y=1.02,
     xanchor="right",
     x=1))
-    
+
     # only for static image generation (kaleido required)
     #fig.update_layout(autosize=False, width=1600, height=800, font_size=24, showlegend=False)
-    
+
     #fig.write_image("polcurve.png")
-    
+
     return fig
 
 

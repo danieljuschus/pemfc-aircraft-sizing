@@ -1,5 +1,5 @@
-# Effect of system voltage and number of stacks in unit on stack mass - Fig. 4.11
-from app.models import stack_model
+# Effect of system voltage and number of stacks in system on stack mass - Fig. 4.11
+from stack_functions import stack_model
 import matplotlib.pyplot as plt
 import numpy as np
 

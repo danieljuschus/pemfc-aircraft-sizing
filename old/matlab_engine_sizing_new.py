@@ -1,10 +1,10 @@
-# Sizing script for a fuel cell (FC) unit, used by the Class2WeightEstimation module of the Initiator (the Matlab
+# Sizing script for a fuel cell (FC) system, used by the Class2WeightEstimation module of the Initiator (the Matlab
 # aircraft sizing tool). The Initiator calls this when estimating the weight of the TurboGen engine of the serial hybrid
 # configuration in getEngineWeight.m.
 #
 # This script can also be used directly, for debugging, sensitivity analyses or validation.
 #
-# One FC engine consists of a FC unit and an electric motor. One FC unit can consist of multiple stacks, but only has
+# One FC engine consists of a FC system and an electric motor. One FC system can consist of multiple stacks, but only has
 # one set of BOP components. One stack consists of multiple cells.
 #
 # Important assumptions:
@@ -13,7 +13,7 @@
 #   combinations of xi and phi in the missionSettings in the xml aircraft input files)
 #
 # Main inputs:
-# 0: Propulsive power output of FC unit in W (the stacks need to produce more to run the BOP)
+# 0: Propulsive power output of FC system in W (the stacks need to produce more to run the BOP)
 # 1: Output voltage in V (constant for now)
 #
 # Cruise condition inputs:
@@ -26,7 +26,7 @@
 # 6: Compressor boolean (False = no compressor)
 #
 # Outputs:
-# 0: Mass of FC unit in kg
+# 0: Mass of FC system in kg
 # 1: Cell efficiency
 
 import sys
@@ -44,8 +44,8 @@ from scipy.io import savemat
 # Depending on number of inputs, determine if run by Matlab, by sensitivity analyses or directly (for debugging)
 if len(sys.argv) == 1:
     # Run directly, for debugging
-    power_fc_unit = 1e6
-    volt_req = 500  # voltage to be produced by a fuel cell unit
+    power_fc_sys = 1e6
+    volt_req = 500  # voltage to be produced by a fuel cell system
     h_cr = 5000
     mach_cr = 0.4
     oversizing = 0.2
@@ -53,7 +53,7 @@ if len(sys.argv) == 1:
     comp_bool = 1
 elif len(sys.argv) > 4:
     # Run for sensitivity studies from Python script, so additional inputs are defined
-    power_fc_unit = float(sys.argv[1])
+    power_fc_sys = float(sys.argv[1])
     volt_req = 500
     h_cr = float(sys.argv[2])
     mach_cr = float(sys.argv[3])
@@ -62,8 +62,8 @@ elif len(sys.argv) > 4:
     comp_bool = float(sys.argv[6])
 elif len(sys.argv) == 4:
     # Run from Matlab
-    power_fc_unit = float(sys.argv[1])
-    volt_req = 500  # voltage to be produced by a fuel cell unit
+    power_fc_sys = float(sys.argv[1])
+    volt_req = 500  # voltage to be produced by a fuel cell system
     h_cr = float(sys.argv[2])
     mach_cr = float(sys.argv[3])
     oversizing = 0.2
@@ -72,9 +72,9 @@ else:
     raise TypeError("Wrong number of inputs for FC engine sizing python script.")
 
 st.sidebar.title("User inputs")
-st.sidebar.number_input("Required output power from system in MW", key="power", 
+st.sidebar.number_input("Required output power from system in MW", key="power",
                 value=power_fc_unit/1e6, step=0.1, min_value=0.1, max_value=2.)
-st.sidebar.number_input("Cruise altitude in km", key="altitude", 
+st.sidebar.number_input("Cruise altitude in km", key="altitude",
                 value=h_cr/1e3, step=0.1, min_value=2., max_value=10.)
 
 power_fc_unit = float(st.session_state.power)*1e6
@@ -91,7 +91,7 @@ t_cr_tot = t_cr * (1 + 0.4 / 2 * mach_cr ** 2)  # total temperature at cruise in
 rho_cr = atm_cr.density[0]  # air density at cruise altitude in kg/m3
 mu_cr = atm_cr.dynamic_viscosity[0]  # dynamic viscosity at cruise altitude in Pa s
 
-# Configuration of FC unit
+# Configuration of FC system
 n_stacks_series = 2  # number of stacks in series
 
 # Other inputs
@@ -120,19 +120,19 @@ volt_cell, power_dens_cell, eta_cell = cell_model(pres_cathode_in, pres_h, cell_
 if comp_bool:
     # Iterate until the fuel cell stacks produce enough power for propulsion AND to run their compressor
     power_req = 0  # initiated as 0 to get iteration going
-    power_req_new = power_fc_unit  # initially, the stacks only need to produce the propulsive power
+    power_req_new = power_fc_sys  # initially, the stacks only need to produce the propulsive power
     while abs(power_req_new-power_req) > 1e-3:  # while not converged within tolerance
         power_req = power_req_new  # this is the power produced by stacks
         geom_comp, power_comp, rho_humid_in, m_dot_comp = compressor_performance_model(power_req, volt_cell, beta,
                                                                                        p_cr_tot, t_cr_tot, mu_cr)
-        power_req_new = power_fc_unit + power_comp  # (new) compressor power has been determined, add this to propulsive
+        power_req_new = power_fc_sys + power_comp  # (new) compressor power has been determined, add this to propulsive
         #                                             power
     m_comp = compressor_mass_model(geom_comp, power_comp)  # determine compressor mass
 else:
     # no compressor
     m_comp = 0
     power_comp = 0
-    power_req_new = power_fc_unit
+    power_req_new = power_fc_sys
     m_dot_comp = mass_flow_stack(power_req_new, volt_cell)  # mass flow of air for cathode in kg/s
     rho_humid_in = rho_cr  # humidifier inlet air density in kg/m3
 
@@ -144,33 +144,33 @@ m_hx = heat_exchanger_model(power_req_new, volt_cell, cell_temp, mu_f, v_cr, mac
 # Stack model
 m_stacks = stack_model(n_stacks_series, volt_req, volt_cell, power_req_new, power_dens_cell)  # mass of stack(s)
 
-# Sum up to find mass of FC unit (all masses in kg)
-m_unit = m_stacks + m_comp + m_humid + m_hx
+# Sum up to find mass of FC system (all masses in kg)
+m_sys = m_stacks + m_comp + m_humid + m_hx
 print("Stack(s): {} kg, Compressor: {} kg, Humidifier: {} kg, Heat Exchanger: {} kg"
       .format(m_stacks, m_comp, m_humid, m_hx))
-# print("Power density of unit in kW/kg: ", round(power_fc_unit/1000/m_unit, 3))
-# print("Stack prop output power: {} kW, Comp power: {} kW".format(power_fc_unit, power_comp))
+# print("Power density of system in kW/kg: ", round(power_fc_sys/1000/m_sys, 3))
+# print("Stack prop output power: {} kW, Comp power: {} kW".format(power_fc_sys, power_comp))
 
-# Determine FC unit efficiency
-eta_fcsys = eta_cell*power_fc_unit/(power_comp+power_fc_unit)*mu_f
-#print("Cell efficiency: {}, Output efficiency: {}".format(eta_cell, eta_fcsys))
+# Determine FC system efficiency
+eta_fcsys = eta_cell*power_fc_sys/(power_comp+power_fc_sys)*mu_f
+print("Cell efficiency: {}, Output efficiency: {}".format(eta_cell, eta_fcsys))
 
 # Write mass of engine and cell efficiency to output file
 if len(sys.argv) == 4:
     # for Matlab
-    savemat("External/FuelCell/output_from_python.mat", {"engineMass": m_unit, "engineEfficiency": eta_fcsys})
+    savemat("External/FuelCell/output_from_python.mat", {"engineMass": m_sys, "engineEfficiency": eta_fcsys})
 elif len(sys.argv) > 4:
     # for other purposes
     import hickle
     hickle.dump([m_stacks, m_comp, m_humid, m_hx, eta_fcsys], "sensitivity_output.hkl")
-    
+
 col1, col2, col3 = st.columns(3)
 with col1:
     st.header("Numerical results")
     st.write("System mass {} kg".format(round(m_unit,2)))
     st.write("Gravimetric power density of system: {} kW/kg".format(round(power_fc_unit/1e3/m_unit,2)))
-    
-with col2: 
+
+with col2:
     mass_df = pd.DataFrame({"Component": ["Stack(s)", "Compressor", "Humidifier", "Heat exchanger"],
                            "Mass": [m_stacks, m_comp, m_humid, m_hx]})
     fig = px.pie(mass_df, values="Mass", names="Component")
