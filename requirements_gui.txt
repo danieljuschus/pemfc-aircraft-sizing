@@ -5,3 +5,7 @@ pyromat
 cadquery
 matplotlib
 plotly
+streamlit
+stpyvista
+pyvista
+pandas

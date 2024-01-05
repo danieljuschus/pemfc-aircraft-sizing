@@ -57,12 +57,12 @@ def compressor_mass_model(geom, power):
     cas_res3_c = cas_res3.cut(out)
 
     # all parts of compressor body
-    parts = [backplate, imp, cas_ai_2, cas_ao_c, out_hc, cas_res3_c]
+    parts = [backplate, imp, cas_ao_c, out_hc, cas_res3_c]  # missing: cas_ai_2,
     #exporters.export(cas_res3_c, 'app/media/comp.json', tolerance=0.01, angularTolerance=0.1,
     #                 exportType=exporters.ExportTypes.TJS)
     
     res = backplate
-    for part in parts:
+    for part in parts[1:]:
         res = res.union(part)
     
     #res = backplate.union(imp).union(cas_res3_c)
