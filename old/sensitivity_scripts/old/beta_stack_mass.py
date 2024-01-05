@@ -1,4 +1,4 @@
-from stack_functions import cell_model, stack_model
+from app.models import cell_model, stack_model
 import numpy as np
 import matplotlib.pyplot as plt
 

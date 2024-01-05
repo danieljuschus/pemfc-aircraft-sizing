@@ -1,18 +1,16 @@
 # Preliminary Propulsion System Sizing Methods for PEM Fuel Cell Aircraft - MSc thesis
 
-This repository contains the main part of the code that I developed for my Master thesis at the TU Delft in 2020/21.
+This repository contains the main part of the code that I developed for my [Master thesis at the TU Delft in 2020/21](http://dx.doi.org/10.13140/RG.2.2.34701.72165).
 
-The required Python packages are: ambiance, pyromat, numpy, scipy and cadquery. The latter is only available on Anaconda. Therefore I suggest creating a conda virtual environment with Python 3.8.
+For the required Python packages, see [requirements.txt](requirements.txt) (or [requirements_gui.txt](requirements_gui.txt), if you also want to use the GUI).
 
-The [main file (matlab_engine_sizing_new.py)](old/matlab_engine_sizing_new.py) is a Python script which sizes a fuel cell 
-(FC) system. It is designed to be used by the Initiator, a Matlab  aircraft sizing tool developed at our faculty. 
-However, it can also be used directly from Python, for debugging, validation or for sensitivity studies. The main script 
-itself calls a number of functions which size various parts of the system. I have also included all the code that I 
-used to make all figures in the sensitivity study and validation sections. Furthermore, I have made sure to add a lot of
-comments to make everything as clear as possible.
+The basic way to use the models is shown in [main.py](app/main.py). The function [size_system](https://github.com/danieljuschus/pemfc-aircraft-sizing/blob/dee57f9b6d7d06745a7f22774348ed0542ef6bd1/app/main.py#L12) 
+sizes a fuel cell system for an aircraft. There is also a GUI that you can use (experimental!).
 
-For the methodology applied in the code please take a look at chapter 3 of my thesis report: 
-https://repository.tudelft.nl/islandora/object/uuid%3Afdc14875-175e-4a4b-8cde-f2f4b6028194?collection=education. The 
-report also contains an introduction into FC aircraft and a summary of the results that were obtained.
+For the methodology applied in the models used in the code please take a look at chapter 3 of my thesis report: 
+http://dx.doi.org/10.13140/RG.2.2.34701.72165. The 
+report also contains an introduction into FC aircraft and a summary of the results that were obtained. The directory [old](old) contains some old
+scripts that I used to generate the results shown in my thesis. For the exact version of the code at the moment of my defence see https://github.com/danieljuschus/pemfc-aircraft-sizing/releases/tag/v1.0.
 
-Please note that this repository will not be updated anymore, except for bug fixes (if I find the time). Instead, further development of the methods will take place within the Initiator, which is a closed-source project. 
+The models contained in the code are not being further developed in this repository. But if anyone finds a bug, feel free to open an issue and I will take a look at it. 
+Any recent commits have just been due to me playing around with the GUI. 

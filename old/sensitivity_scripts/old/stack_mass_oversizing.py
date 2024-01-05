@@ -1,5 +1,5 @@
-from stack_functions import stack_model, cell_model
-from heat_exchanger import heat_exchanger_model
+from app.models import stack_model, cell_model
+from app.models import heat_exchanger_model
 from ambiance import Atmosphere
 import numpy as np
 import matplotlib.pyplot as plt

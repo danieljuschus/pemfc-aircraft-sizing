@@ -1,7 +1,7 @@
 # Effect of changes in beta and oversizing factor on polarization curve - Fig 4.10
 import matplotlib.pyplot as plt
 import numpy as np
-from stack_functions import cell_voltage, cell_model
+from app.models import cell_voltage, cell_model
 
 pres1 = 54000  # 5 km
 pres2 = 1.5*pres1

@@ -1,6 +1,10 @@
 *.mat
 !aircraft_sensitivities_data/*.mat
 *.pdf
+*.hkl
+*.stl
 
 __pycache__/
 .idea/
+
+.spyproject/

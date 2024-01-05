@@ -1,12 +1,12 @@
-# Sizing script for a fuel cell (FC) system
+# Main sizing script for a fuel cell (FC) system
 
 import sys
 from ambiance import Atmosphere
-from stack_functions import cell_model, stack_model, mass_flow_stack
-from compressor_performance import compressor_performance_model
-from compressor_mass import compressor_mass_model
-from humidifier import humidifier_model
-from heat_exchanger import heat_exchanger_model
+from models.stack_functions import cell_model, stack_model, mass_flow_stack
+from models.compressor_performance import compressor_performance_model
+from models.compressor_mass import compressor_mass_model
+from models.humidifier import humidifier_model
+from models.heat_exchanger import heat_exchanger_model
 
 
 def size_system(power_fc_sys, volt_req, h_cr, mach_cr, oversizing, beta, comp_bool, n_stacks_series):
@@ -24,6 +24,9 @@ def size_system(power_fc_sys, volt_req, h_cr, mach_cr, oversizing, beta, comp_bo
     :param comp_bool: Boolean for whether to include a compressor
     :return: results: List of sizing results
     """
+
+    figs = []
+
     # Atmospheric conditions
     atm_cr = Atmosphere(h_cr)
     c_cr = atm_cr.speed_of_sound[0]  # speed of sound at cruise in m
@@ -48,7 +51,8 @@ def size_system(power_fc_sys, volt_req, h_cr, mach_cr, oversizing, beta, comp_bo
 
     # Cell model
     pres_h = Atmosphere(0).pressure[0]  # assume that the anode inlet pressure is equal to sea level air pressure
-    volt_cell, power_dens_cell, eta_cell = cell_model(pres_cathode_in, pres_h, cell_temp, oversizing)
+    volt_cell, power_dens_cell, eta_cell, fig = cell_model(pres_cathode_in, pres_h, cell_temp, oversizing)
+    figs.append(fig)
 
     # Compressor models
     if comp_bool:
@@ -60,8 +64,7 @@ def size_system(power_fc_sys, volt_req, h_cr, mach_cr, oversizing, beta, comp_bo
             geom_comp, power_comp, rho_humid_in, m_dot_comp = compressor_performance_model(power_req, volt_cell, beta,
                                                                                            p_cr_tot, t_cr_tot, mu_cr)
             power_req_new = power_fc_sys + power_comp  # (new) compressor power has been determined, add this to
-            # propulsive
-            #                                             power
+            # propulsive power
         m_comp = compressor_mass_model(geom_comp, power_comp)  # determine compressor mass
     else:
         # no compressor
@@ -73,12 +76,11 @@ def size_system(power_fc_sys, volt_req, h_cr, mach_cr, oversizing, beta, comp_bo
 
     # Remaining BOP models
     m_humid = humidifier_model(m_dot_comp, rho_humid_in)  # mass of humidifier
-    m_hx = heat_exchanger_model(power_req_new, volt_cell, cell_temp, mu_f, v_cr, mach_cr, p_cr_tot, t_cr_tot, rho_cr,
+    m_hx, dim_hx = heat_exchanger_model(power_req_new, volt_cell, cell_temp, mu_f, v_cr, mach_cr, p_cr_tot, t_cr_tot, rho_cr,
                                 mu_cr)
-    # mass of heat exchanger
 
     # Stack model
-    m_stacks = stack_model(n_stacks_series, volt_req, volt_cell, power_req_new, power_dens_cell)  # mass of stack(s)
+    m_stacks, dim_stack, res_stack = stack_model(n_stacks_series, volt_req, volt_cell, power_req_new, power_dens_cell)  # mass of stack(s)
 
     # Sum up to find mass of FC system (all masses in kg)
     m_sys = m_stacks + m_comp + m_humid + m_hx
@@ -91,8 +93,11 @@ def size_system(power_fc_sys, volt_req, h_cr, mach_cr, oversizing, beta, comp_bo
     eta_fcsys = eta_cell * power_fc_sys / (power_comp + power_fc_sys) * mu_f
     print("Cell efficiency: {}, Output efficiency: {}".format(eta_cell, eta_fcsys))
 
+    # Hydrogen comsumption
+    mdot_h2 = 1.05e-8 * (power_comp + power_fc_sys) / volt_cell
+
     # Make list of values to return
-    results = [m_sys]
+    results = [m_sys, m_stacks, m_comp, m_humid, m_hx, eta_fcsys, mdot_h2, power_comp, figs, dim_stack, n_stacks_series, dim_hx, res_stack]
 
     return results
 
