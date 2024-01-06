@@ -6,3 +6,7 @@ docker run -p 8501:8501 gui
 
 Deploy to fly:
 flyctl deploy
+
+If flyctl is installed but not available as a command:
+export FLYCTL_INSTALL="/home/username/.fly"
+export PATH="$FLYCTL_INSTALL/bin:$PATH"
