@@ -11,13 +11,13 @@ RUN apt-get update && apt-get install -y \
     curl \
     software-properties-common \
     git \
+    libgl1-mesa-glx libxrender1\
+    xvfb\
     && rm -rf /var/lib/apt/lists/*
 
+COPY . .
 # Clone project into container
-RUN git clone -b streamlit https://github.com/danieljuschus/pemfc-aircraft-sizing
-
-# Workdir into cloned repo
-WORKDIR /app/pemfc-aircraft-sizing
+#RUN git clone -b streamlit https://github.com/danieljuschus/pemfc-aircraft-sizing
 
 # Install Python requirements
 RUN pip install --no-cache-dir -r requirements_gui.txt
@@ -26,5 +26,5 @@ RUN pip install --no-cache-dir -r requirements_gui.txt
 EXPOSE 8501
 
 # Run GUI
-WORKDIR /app/pemfc-aircraft-sizing/app
+WORKDIR /app/app
 ENTRYPOINT ["streamlit", "run", "gui.py"]

@@ -183,6 +183,7 @@ with col1:
         st.warning('Legend in 3D-model viewer not yet working, replaced with table for now', icon="⚠️")
         st.table(df)
 
+    pv.start_xvfb()
     plotter = pv.Plotter(window_size=[400, 400])
     plotter.background_color = "#0e1117"
 
