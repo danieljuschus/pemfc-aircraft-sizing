@@ -1,11 +1,8 @@
-# Build stage first: create env with conda, then use conda pack to reduce size of env
-# See https://pythonspeed.com/articles/conda-docker-image-size/
 FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install git (to clone project) and other stuff which Streamlit apparently needs
+# Install stuff which Streamlit apparently needs
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
@@ -15,9 +12,8 @@ RUN apt-get update && apt-get install -y \
     xvfb\
     && rm -rf /var/lib/apt/lists/*
 
+# Copy entire repository into workdir
 COPY . .
-# Clone project into container
-#RUN git clone -b streamlit https://github.com/danieljuschus/pemfc-aircraft-sizing
 
 # Install Python requirements
 RUN pip install --no-cache-dir -r requirements_gui.txt
